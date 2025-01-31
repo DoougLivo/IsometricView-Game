@@ -176,6 +176,37 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8673afdf9e40c264482ba320fdeed881, type: 3}
+--- !u!1 &121302437
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 121302438}
+  m_Layer: 0
+  m_Name: Case Pos
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &121302438
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 121302437}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.145, y: 0.971, z: -0.187}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1862205944}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &250693652
 GameObject:
   m_ObjectHideFlags: 0
@@ -521,7 +552,7 @@ GameObject:
   - component: {fileID: 500779127}
   m_Layer: 0
   m_Name: Wall (3)
-  m_TagString: Untagged
+  m_TagString: Wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
@@ -736,6 +767,9 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 5903297864969995812, guid: 8f5e135a19626f544908fc8f156144b9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1394413818}
     - targetCorrespondingSourceObject: {fileID: 883724508928496280, guid: 8f5e135a19626f544908fc8f156144b9, type: 3}
       insertIndex: -1
       addedObject: {fileID: 917023784}
@@ -790,6 +824,7 @@ MonoBehaviour:
   - {fileID: 1703748392}
   - {fileID: 371285928}
   hasGrenades: 0
+  followCamera: {fileID: 330585545}
 --- !u!136 &758153034
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -1031,8 +1066,14 @@ MonoBehaviour:
   type: 0
   damage: 25
   rate: 0.6
+  maxAmmo: 0
+  curAmmo: 0
   meleeArea: {fileID: 856300919}
   trailEffect: {fileID: 1875155932}
+  bulletPos: {fileID: 0}
+  bullet: {fileID: 0}
+  bulletCasePos: {fileID: 0}
+  bulletCase: {fileID: 0}
 --- !u!65 &856300919
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1158,7 +1199,7 @@ GameObject:
   - component: {fileID: 949057776}
   m_Layer: 0
   m_Name: Wall (2)
-  m_TagString: Untagged
+  m_TagString: Wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
@@ -1351,7 +1392,7 @@ GameObject:
   - component: {fileID: 987817620}
   m_Layer: 0
   m_Name: Wall
-  m_TagString: Untagged
+  m_TagString: Wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
@@ -1636,7 +1677,10 @@ PrefabInstance:
     m_RemovedGameObjects:
     - {fileID: 2726903823770339265, guid: 7487e645b0e268b4e95cc1917fd759bb, type: 3}
     - {fileID: 5689743596029464936, guid: 7487e645b0e268b4e95cc1917fd759bb, type: 3}
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 2595472300917199474, guid: 7487e645b0e268b4e95cc1917fd759bb, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1899669686}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 3207138540761808140, guid: 7487e645b0e268b4e95cc1917fd759bb, type: 3}
       insertIndex: -1
@@ -1664,11 +1708,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 147da1ab1ea93cc47a9d68127c3e4056, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  type: 1
   damage: 0
-  rate: 0
+  rate: 0.15
+  maxAmmo: 30
+  curAmmo: 30
   meleeArea: {fileID: 0}
   trailEffect: {fileID: 0}
+  bulletPos: {fileID: 1394413818}
+  bullet: {fileID: 4373684476743631126, guid: 5b7497b697a3181458b7682ed320f148, type: 3}
+  bulletCasePos: {fileID: 1899669686}
+  bulletCase: {fileID: 4375249058858504776, guid: a921ecd6ad973eb4b81a40beb339e174, type: 3}
 --- !u!1 &1174107678 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3403024553794750845, guid: 8f5e135a19626f544908fc8f156144b9, type: 3}
@@ -1711,7 +1761,7 @@ GameObject:
   - component: {fileID: 1203169870}
   m_Layer: 0
   m_Name: Wall (1)
-  m_TagString: Untagged
+  m_TagString: Wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
@@ -6815,6 +6865,37 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!1 &1394413817
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1394413818}
+  m_Layer: 0
+  m_Name: Bullet Pos
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1394413818
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1394413817}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1, y: 2.5, z: 1.8}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 758153036}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1473015865
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -17058,7 +17139,10 @@ PrefabInstance:
     m_RemovedGameObjects:
     - {fileID: 3868992004847720406, guid: 06d757c677baed545b8299a27d732173, type: 3}
     - {fileID: 4284059398407443702, guid: 06d757c677baed545b8299a27d732173, type: 3}
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 1088918624247961299, guid: 06d757c677baed545b8299a27d732173, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 121302438}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 4012358716039739034, guid: 06d757c677baed545b8299a27d732173, type: 3}
       insertIndex: -1
@@ -17086,11 +17170,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 147da1ab1ea93cc47a9d68127c3e4056, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  type: 1
   damage: 0
-  rate: 0
+  rate: 0.4
+  maxAmmo: 7
+  curAmmo: 7
   meleeArea: {fileID: 0}
   trailEffect: {fileID: 0}
+  bulletPos: {fileID: 1394413818}
+  bullet: {fileID: 7608848474479896494, guid: 0fe2f34d4b0f6fb43ab8d6dd87fe54c4, type: 3}
+  bulletCasePos: {fileID: 121302438}
+  bulletCase: {fileID: 4375249058858504776, guid: a921ecd6ad973eb4b81a40beb339e174, type: 3}
 --- !u!1 &1875155930
 GameObject:
   m_ObjectHideFlags: 0
@@ -17239,6 +17329,37 @@ TrailRenderer:
   m_Autodestruct: 0
   m_Emitting: 1
   m_ApplyActiveColorSpace: 1
+--- !u!1 &1899669685
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1899669686}
+  m_Layer: 0
+  m_Name: Case Pos
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1899669686
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1899669685}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.094, y: 1.093, z: -0.193}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1083616737}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2117867348
 PrefabInstance:
   m_ObjectHideFlags: 0

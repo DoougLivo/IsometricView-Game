@@ -10,11 +10,13 @@ public class Player : MonoBehaviour
     bool wDown;
     bool jDown;
     bool fDown;
+    bool rDown;
     bool iDown;
 
     bool isJump;
     bool isDodge;
     bool isSwap;
+    bool isReload;
     bool isFireReady = true;
 
     bool sDown1; // 무기 스왑 변수
@@ -47,6 +49,8 @@ public class Player : MonoBehaviour
     [SerializeField] GameObject[] grenades;
     [SerializeField] int hasGrenades;
 
+    [SerializeField] Camera followCamera;
+
     int equipWeaponIndex = -1; // 초기값 설정
     float fireDelay;
 
@@ -74,6 +78,9 @@ public class Player : MonoBehaviour
         // 공격
         Attack();
 
+        // 재장전
+        Reload();
+
         // 회피
         Dodge();
 
@@ -92,7 +99,8 @@ public class Player : MonoBehaviour
         vAxis = Input.GetAxisRaw("Vertical");
         wDown = Input.GetButton("Walk");
         jDown = Input.GetButtonDown("Jump");
-        fDown = Input.GetButtonDown("Fire1");
+        fDown = Input.GetButton("Fire1");
+        rDown = Input.GetButtonDown("Reload");
         iDown = Input.GetButtonDown("Interaction");
         sDown1 = Input.GetButtonDown("Swap1");
         sDown2 = Input.GetButtonDown("Swap2");
@@ -106,7 +114,7 @@ public class Player : MonoBehaviour
         if (isDodge) // 회피 중일 때
             moveVec = dodgeVec; // 움직임 벡터를 회피 벡터로 바꿈 (회피중엔 방향 못바꾸게 함)
 
-        if (/*isSwap*/!isFireReady) // 공격, 스왑할 때 움직이지 못하게 함
+        if (/*isSwap*/!isFireReady/*isReload*/) // 공격, 스왑할 때 움직이지 못하게 함, 리로드
             moveVec = Vector3.zero;
         
         transform.position += moveVec * speed * (wDown ? 0.3f : 1f) * Time.deltaTime;
@@ -117,12 +125,21 @@ public class Player : MonoBehaviour
 
     void Turn()
     {
+        // 키보드에 의한 회전
         transform.LookAt(transform.position + moveVec); // 나아가는 방향으로 바라보게 함
+
+        // 마우스에 의한 회전
+        Ray ray = followCamera.ScreenPointToRay(Input.mousePosition); // 마우스 방향으로 레이를 쏨
+        RaycastHit rayHit;
+        if (Physics.Raycast(ray, out rayHit, 100))
+        {
+
+        }
     }
 
     void Jump()
     {
-        if (jDown && moveVec == Vector3.zero && !isJump && !isDodge && !isSwap) // 움직이지 않을 때 스페이스바 누르면 점프
+        if (jDown && moveVec == Vector3.zero && !isJump && !isDodge && !isSwap && !isReload) // 움직이지 않을 때 스페이스바 누르면 점프
         {
             rb.AddForce(Vector3.up * jPower, ForceMode.Impulse);
             anim.SetBool("isJump", true);
@@ -140,18 +157,43 @@ public class Player : MonoBehaviour
         isFireReady = equipWeapon.rate < fireDelay;
 
         // 공격
-        if (fDown && isFireReady && !isDodge && !isSwap)
+        if (fDown && isFireReady && !isDodge && !isSwap && !isReload)
         {
             equipWeapon.Use();
-            anim.SetTrigger("doSwing");
+            anim.SetTrigger(equipWeapon.type == Weapon.Type.Melee ? "doSwing" : "doShot");
 
             fireDelay = 0; // 0으로 초기화 (쿨타임)
         }
     }
 
+    void Reload()
+    {
+        if (equipWeapon == null) return; // 장착 무기가 없을 때
+        if (equipWeapon.type == Weapon.Type.Melee) return; // 근접 무기일 때
+        if (ammo == 0) return; // 플레이어에게 총알이 아예 없을 때
+        
+        // 재장전
+        if (rDown && !isJump && !isDodge && !isSwap && isFireReady && equipWeapon.curAmmo < equipWeapon.maxAmmo)
+        {
+            anim.SetTrigger("doReload");
+            isReload = true;
+
+            Invoke("ReloadOut", 3f);
+        }
+    }
+
+    void ReloadOut()
+    {
+        // 소지한 탄을 고려해서 계산하기
+        int reAmmo = ammo < equipWeapon.maxAmmo ? ammo : equipWeapon.maxAmmo;
+        equipWeapon.curAmmo = reAmmo;
+        ammo -= reAmmo;
+        isReload = false;
+    }
+
     void Dodge()
     {
-        if (jDown && moveVec != Vector3.zero && !isJump && !isDodge && !isSwap) // 움직이는 도중 스페이스바 누르면 회피
+        if (jDown && moveVec != Vector3.zero && !isJump && !isDodge && !isSwap && !isReload) // 움직이는 도중 스페이스바 누르면 회피
         {
             dodgeVec = moveVec;
             speed *= 2; // 회피는 이동속도만 2배로 상승하도록 설정
@@ -182,7 +224,7 @@ public class Player : MonoBehaviour
         if (sDown2) weaponIndex = 1;
         if (sDown3) weaponIndex = 2;
 
-        if ((sDown1 || sDown2 || sDown3) && !isJump && !isDodge)
+        if ((sDown1 || sDown2 || sDown3) && !isJump && !isDodge && !isReload)
         {
             if (equipWeapon != null) equipWeapon.gameObject.SetActive(false); // 장작중인 무기가 있을 때만 비활성화 해야 에러가 나지 않음
             equipWeaponIndex = weaponIndex;
@@ -205,7 +247,7 @@ public class Player : MonoBehaviour
     void Interaction()
     {
         
-        if (iDown && nearObj != null && !isJump && !isDodge)
+        if (iDown && nearObj != null && !isJump && !isDodge && !isReload)
         {
             if (nearObj.tag == "Weapon")
             {
