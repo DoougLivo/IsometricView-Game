@@ -18,6 +18,7 @@ public class Player : MonoBehaviour
     bool isSwap;
     bool isReload;
     bool isFireReady = true;
+    bool isBorder;
 
     bool sDown1; // 무기 스왑 변수
     bool sDown2;
@@ -89,8 +90,6 @@ public class Player : MonoBehaviour
 
         // 상호작용 (e키)
         Interaction();
-
-        rb.angularVelocity = Vector3.zero;
     }
 
     void GetInput()
@@ -116,8 +115,10 @@ public class Player : MonoBehaviour
 
         if (/*isSwap*/!isFireReady/*isReload*/) // 공격, 스왑할 때 움직이지 못하게 함, 리로드
             moveVec = Vector3.zero;
-        
-        transform.position += moveVec * speed * (wDown ? 0.3f : 1f) * Time.deltaTime;
+
+        if (!isBorder) { // 벽을 넘어가지 못하게 막음
+            transform.position += moveVec * speed * (wDown ? 0.3f : 1f) * Time.deltaTime;
+        }
 
         anim.SetBool("isRun", moveVec != Vector3.zero); // moveVec이 0이 아닐때 (움직일때)
         anim.SetBool("isWalk", wDown);
@@ -129,11 +130,15 @@ public class Player : MonoBehaviour
         transform.LookAt(transform.position + moveVec); // 나아가는 방향으로 바라보게 함
 
         // 마우스에 의한 회전
-        Ray ray = followCamera.ScreenPointToRay(Input.mousePosition); // 마우스 방향으로 레이를 쏨
-        RaycastHit rayHit;
-        if (Physics.Raycast(ray, out rayHit, 100))
-        {
-
+        if (fDown) { // 마우스 클릭 시
+            Ray ray = followCamera.ScreenPointToRay(Input.mousePosition); // 마우스 방향으로 레이를 쏨
+            RaycastHit rayHit; // 정보를 저장할 변수
+            if (Physics.Raycast(ray, out rayHit, 100)) // out - return처럼 반환값을 변수에 저장하는 키워드
+            {
+                Vector3 nextVec = rayHit.point - transform.position; // 상대적 위치 구함
+                nextVec.y = 0; // y축은 0으로 고정함
+                transform.LookAt(transform.position + nextVec);
+            }
         }
     }
 
@@ -173,7 +178,7 @@ public class Player : MonoBehaviour
         if (ammo == 0) return; // 플레이어에게 총알이 아예 없을 때
         
         // 재장전
-        if (rDown && !isJump && !isDodge && !isSwap && isFireReady && equipWeapon.curAmmo < equipWeapon.maxAmmo)
+        if (rDown && !isJump && !isDodge && !isSwap && isFireReady && equipWeapon.curAmmo < equipWeapon.maxAmmo && !isReload)
         {
             anim.SetTrigger("doReload");
             isReload = true;
@@ -185,8 +190,8 @@ public class Player : MonoBehaviour
     void ReloadOut()
     {
         // 소지한 탄을 고려해서 계산하기
-        int reAmmo = ammo < equipWeapon.maxAmmo ? ammo : equipWeapon.maxAmmo;
-        equipWeapon.curAmmo = reAmmo;
+        int reAmmo = ammo + equipWeapon.curAmmo < equipWeapon.maxAmmo ? ammo : equipWeapon.maxAmmo - equipWeapon.curAmmo;
+        equipWeapon.curAmmo += reAmmo; // 소지한 탄알 + 현재 탄알이 최대 탄알(30발) 보다 작으면 그 만큼만 장전하고, 반대로 크면 최대 탄알 - 현재 탄알 한 나머지만 장전한다.
         ammo -= reAmmo;
         isReload = false;
     }
@@ -258,6 +263,25 @@ public class Player : MonoBehaviour
                 Destroy(nearObj);
             }
         }
+    }
+
+    void FreezeRotation()
+    {
+        rb.angularVelocity = Vector3.zero; // angularVelocity - 물리 회전 속도
+    }
+
+    void StopToWall()
+    {
+        Debug.DrawRay(transform.position, moveVec * 5, Color.green); // Scene화면에서 Ray를 봄 (시작위치, 방향 * 길이, 색깔)
+        
+        // (위치, 방향, 거리, 레이어마스크) 레이어마스크를 가진 물체에 닿으면 true로 바뀜
+        isBorder = Physics.Raycast(transform.position, moveVec, 5, LayerMask.GetMask("Wall"));
+    }
+
+    void FixedUpdate()
+    {
+        FreezeRotation();
+        StopToWall();
     }
 
     void OnCollisionEnter(Collision collision)
