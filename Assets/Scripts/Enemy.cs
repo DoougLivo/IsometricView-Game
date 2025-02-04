@@ -16,6 +16,7 @@ public class Enemy : MonoBehaviour
         boxCollider = GetComponent<BoxCollider>();
         mat = GetComponent<MeshRenderer>().material;
         rb.linearDamping = 5f; // 마찰력
+        rb.angularDamping = 5f; // 회전 마찰력
     }
 
     void OnTriggerEnter(Collider other)

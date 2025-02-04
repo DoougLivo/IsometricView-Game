@@ -10,6 +10,7 @@ public class Player : MonoBehaviour
     bool wDown;
     bool jDown;
     bool fDown;
+    bool gDown;
     bool rDown;
     bool iDown;
 
@@ -49,6 +50,7 @@ public class Player : MonoBehaviour
     [SerializeField] bool[] hasWeapons;
     [SerializeField] GameObject[] grenades;
     [SerializeField] int hasGrenades;
+    [SerializeField] GameObject grenadeObj;
 
     [SerializeField] Camera followCamera;
 
@@ -76,6 +78,9 @@ public class Player : MonoBehaviour
         // 점프
         Jump();
 
+        // 수류탄 투척
+        Grenade();
+
         // 공격
         Attack();
 
@@ -99,6 +104,7 @@ public class Player : MonoBehaviour
         wDown = Input.GetButton("Walk");
         jDown = Input.GetButtonDown("Jump");
         fDown = Input.GetButton("Fire1");
+        gDown = Input.GetButtonDown("Fire2");
         rDown = Input.GetButtonDown("Reload");
         iDown = Input.GetButtonDown("Interaction");
         sDown1 = Input.GetButtonDown("Swap1");
@@ -150,6 +156,34 @@ public class Player : MonoBehaviour
             anim.SetBool("isJump", true);
             anim.SetTrigger("doJump");
             isJump = true;
+        }
+    }
+
+    void Grenade()
+    {
+        if (hasGrenades == 0) return;
+
+        if (gDown && !isReload && !isSwap)
+        {
+            Ray ray = followCamera.ScreenPointToRay(Input.mousePosition); // 마우스 방향으로 레이를 쏨
+            RaycastHit rayHit; // 정보를 저장할 변수
+            if (Physics.Raycast(ray, out rayHit, 100)) // out - return처럼 반환값을 변수에 저장하는 키워드
+            {
+                Vector3 nextVec = rayHit.point - transform.position; // 상대적 위치 구함
+                nextVec.y = 20; // 위로 던짐
+                //transform.LookAt(transform.position + nextVec);
+
+                // 수류탄 생성 후 던짐
+                GameObject instantGrenade = Instantiate(grenadeObj, transform.position, transform.rotation);
+                Rigidbody rbGrenade = instantGrenade.GetComponent<Rigidbody>();
+                rbGrenade.linearDamping = 1; // 마찰력
+                rbGrenade.angularDamping = 1; // 회전 마찰력
+                rbGrenade.AddForce(nextVec, ForceMode.Impulse);
+                rbGrenade.AddTorque(Vector3.back * 10, ForceMode.Impulse);
+
+                hasGrenades--; // 던진 수류탄 감소
+                grenades[hasGrenades].SetActive(false); // 해당 수류탄 비활성화
+            }
         }
     }
 

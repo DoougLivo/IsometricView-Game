@@ -1071,6 +1071,7 @@ MonoBehaviour:
   - {fileID: 1703748392}
   - {fileID: 371285928}
   hasGrenades: 0
+  grenadeObj: {fileID: 2979347947892442542, guid: 5b405e45cd8a9954fbc9138cc8e6c43f, type: 3}
   followCamera: {fileID: 330585545}
 --- !u!136 &758153034
 CapsuleCollider:
