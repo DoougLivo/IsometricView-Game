@@ -170,9 +170,8 @@ public class Player : MonoBehaviour
             if (Physics.Raycast(ray, out rayHit, 100)) // out - return처럼 반환값을 변수에 저장하는 키워드
             {
                 Vector3 nextVec = rayHit.point - transform.position; // 상대적 위치 구함
-                nextVec.y = 20; // 위로 던짐
-                //transform.LookAt(transform.position + nextVec);
-
+                nextVec.y = 20; // 수류탄 위로 던짐
+                
                 // 수류탄 생성 후 던짐
                 GameObject instantGrenade = Instantiate(grenadeObj, transform.position, transform.rotation);
                 Rigidbody rbGrenade = instantGrenade.GetComponent<Rigidbody>();
@@ -181,6 +180,10 @@ public class Player : MonoBehaviour
                 rbGrenade.AddForce(nextVec, ForceMode.Impulse);
                 rbGrenade.AddTorque(Vector3.back * 10, ForceMode.Impulse);
 
+                // 수류탄을 던진 후 y를 0으로 만들고, 캐릭터가 던지는 방향을 바라보게 함
+                nextVec.y = 0;
+                transform.LookAt(transform.position + nextVec);
+                
                 hasGrenades--; // 던진 수류탄 감소
                 grenades[hasGrenades].SetActive(false); // 해당 수류탄 비활성화
             }
