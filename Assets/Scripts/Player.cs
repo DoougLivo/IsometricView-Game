@@ -1,3 +1,4 @@
+using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -20,6 +21,7 @@ public class Player : MonoBehaviour
     bool isReload;
     bool isFireReady = true;
     bool isBorder;
+    bool isDamage;
 
     bool sDown1; // 무기 스왑 변수
     bool sDown2;
@@ -42,6 +44,7 @@ public class Player : MonoBehaviour
 
     Rigidbody rb;
     Animator anim;
+    MeshRenderer[] meshs; // 플레이어의 머리, 몸, 팔, 다리 등 여러 메쉬를 가져와야 해서 배열로 선언함
 
     GameObject nearObj;
     Weapon equipWeapon; // 장착중인 무기
@@ -61,6 +64,7 @@ public class Player : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         anim = GetComponentInChildren<Animator>(); // Animator가 자식 오브젝트에 있기 때문
+        meshs = GetComponentsInChildren<MeshRenderer>(); // 모든 자식의 MeshRenderer 컴포넌트를 다 가져옴
     }
 
     // Update is called once per frame
@@ -334,7 +338,7 @@ public class Player : MonoBehaviour
     // 아이템 처리
     void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.tag == "Item")
+        if (other.tag == "Item")
         {
             Item item = other.GetComponent<Item>();
             switch(item.type)
@@ -358,6 +362,32 @@ public class Player : MonoBehaviour
                     break;
             }
             Destroy(other.gameObject); // 먹은 아이템 파괴
+        }
+        else if (other.tag == "EnemyBullet") // 적 미사일에 피격 시
+        {
+            if (!isDamage) // 대미지를 입으면 무적 시간을 주기 위함
+            {
+                Bullet enemyBullet = other.GetComponent<Bullet>(); // 불릿 스크립트 재활용
+                health -= enemyBullet.damage; // 적 미사일 맞고 피 깎임
+                StartCoroutine(OnDamage()); // 피격 로직
+            }
+        }
+    }
+
+    IEnumerator OnDamage()
+    {
+        isDamage = true;
+        foreach(MeshRenderer mesh in meshs)
+        {
+            mesh.material.color = Color.yellow; // 플레이어 피격 시 색상 변경
+        }
+
+        yield return new WaitForSeconds(1f);
+
+        isDamage = false;
+        foreach (MeshRenderer mesh in meshs)
+        {
+            mesh.material.color = Color.white; // 플레이어 피격 끝난 후 색상 변경
         }
     }
 

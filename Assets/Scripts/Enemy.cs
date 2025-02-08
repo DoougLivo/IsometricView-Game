@@ -36,8 +36,11 @@ public class Enemy : MonoBehaviour
 
     void Update()
     {
-        if (isChase) // isChase가 true 일 때만 추적함
+        if (nav.enabled) // nav가 활성화일 때만 추적함
+        { 
             nav.SetDestination(target.position); // 도착할 목표 위치 지정 함수
+            nav.isStopped = !isChase; // isChase가 true면 멈추지 않고, 반대로 false면 stop 함
+        }
     }
 
     void FreezeVelocity() // 플레이어와 부딪혔을 때 밀리는 현상 방지
@@ -80,17 +83,17 @@ public class Enemy : MonoBehaviour
             Debug.Log("Range : " + curHealth);
         }
 
-        // 플레이어 감지
-        if (other.CompareTag("Player"))
-        {
-            isChase = true;
-        }
+        //// 플레이어 감지
+        //if (other.CompareTag("Player"))
+        //{
+        //    isChase = true;
+        //}
     }
 
-    void OnTriggerExit(Collider other)
-    {
-        isChase = false;
-    }
+    //void OnTriggerExit(Collider other)
+    //{
+    //    isChase = false;
+    //}
 
     public void HitByGrenade(Vector3 explosionPos)
     {
