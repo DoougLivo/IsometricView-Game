@@ -1,13 +1,20 @@
+using NUnit.Framework.Constraints;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.AI; // Nav 관련 클래스 사용 시 필요
 
 public class Enemy : MonoBehaviour
 {
+    public enum Type { A, B, C }; // 일반형, 돌격형, 원거리형
+    public Type enemyType; // 타입을 지정할 변수
+
     [SerializeField] int maxHealth;
     [SerializeField] int curHealth;
     [SerializeField] Transform target;
+    [SerializeField] BoxCollider meleeArea; // 일반형 몬스터 공격 범위
+    [SerializeField] GameObject bullet; // 원거리형 몬스터 총알
     [SerializeField] bool isChase; // 추적을 결정
+    [SerializeField] bool isAttack;
 
     Rigidbody rb;
     BoxCollider boxCollider;
@@ -52,8 +59,90 @@ public class Enemy : MonoBehaviour
         }
     }
 
+    void Targeting()
+    {
+        float targetRedius = 0; // 공격 반지름 (폭)
+        float targetRange = 0; // 공격 범위
+
+        // 각 타겟팅 수치 정하기
+        switch (enemyType)
+        {
+            case Type.A: // 일반형
+                targetRedius = 1.5f;
+                targetRange = 3f;
+                break;
+            case Type.B: // 돌격형
+                targetRedius = 1f; // 정확하게 돌격하기 위해 폭은 좁게 함
+                targetRange = 12f; // 범위는 일반형의 네배
+                break;
+            case Type.C: // 원거리형
+                targetRedius = 0.5f; // 더 정확하게 발사하기 위함
+                targetRange = 25f; // 범위는 길게
+                break;
+        }
+
+        // 전방으로 구체 레이를 쏨
+        RaycastHit[] rayHits = Physics.SphereCastAll(transform.position,
+            targetRedius, transform.forward, targetRange, LayerMask.GetMask("Player"));
+
+        // rayHits 변수에 데이터가 들어오면 공격 코루틴 실행
+        if (rayHits.Length > 0 && !isAttack) // 공격 중이지 않을 때만 공격 가능
+        {
+            StartCoroutine(Attack());
+        }
+    }
+
+    IEnumerator Attack()
+    {
+        // 범위에 들어오면 먼저 정지한 다음, 애니메이션과 함께 공격 범위 활성화
+        isChase = false;
+        isAttack = true;
+        anim.SetBool("isAttack", true);
+        
+        switch (enemyType)
+        {
+            case Type.A: // 일반형
+                yield return new WaitForSeconds(0.5f); // 공격 콜라이더 활성화
+                meleeArea.enabled = true;
+
+                yield return new WaitForSeconds(1f); // 공격 콜라이더 비활성화
+                meleeArea.enabled = false;
+
+                yield return new WaitForSeconds(1f); // 적 공격 속도 조정
+                break;
+
+            case Type.B: // 돌격형
+                yield return new WaitForSeconds(0.5f); // 선 딜레이
+                rb.AddForce(transform.forward * 20f, ForceMode.Impulse); // 앞으로 돌격
+                meleeArea.enabled = true;
+
+                yield return new WaitForSeconds(0.5f); // 돌격 시간
+                rb.linearVelocity = Vector3.zero; // 멈춤
+                meleeArea.enabled = false;
+
+                yield return new WaitForSeconds(2f); // 적 공격 속도 조정
+                break;
+
+            case Type.C: // 원거리형
+                yield return new WaitForSeconds(0.5f); // 미사일 발사 준비 동작
+                // 미사일 만들고 발사
+                GameObject instantBullet = Instantiate(bullet, transform.position, transform.rotation);
+                Rigidbody rbBullet = instantBullet.GetComponent<Rigidbody>();
+                rbBullet.AddForce(transform.forward * 20, ForceMode.Impulse);
+
+                yield return new WaitForSeconds(2f); // 적 공격 속도 조정
+                break;
+        }
+
+        // 공격 끝난 후
+        isChase = true;
+        isAttack = false;
+        anim.SetBool("isAttack", false);
+    }
+
     void FixedUpdate()
     {
+        Targeting();
         FreezeVelocity();
     }
 

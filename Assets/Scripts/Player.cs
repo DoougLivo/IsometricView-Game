@@ -363,12 +363,17 @@ public class Player : MonoBehaviour
             }
             Destroy(other.gameObject); // 먹은 아이템 파괴
         }
-        else if (other.tag == "EnemyBullet") // 적 미사일에 피격 시
+        else if (other.tag == "EnemyBullet") // 적 공격, 미사일에 피격 시
         {
             if (!isDamage) // 대미지를 입으면 무적 시간을 주기 위함
             {
                 Bullet enemyBullet = other.GetComponent<Bullet>(); // 불릿 스크립트 재활용
                 health -= enemyBullet.damage; // 적 미사일 맞고 피 깎임
+
+                // 근접 공격은 rigidbody가 없고, 미사일에만 rigidbody가 있음
+                if (other.GetComponent<Rigidbody>() != null) // 미사일에 맞으면
+                    Destroy(other.gameObject); // 미사일 파괴
+
                 StartCoroutine(OnDamage()); // 피격 로직
             }
         }

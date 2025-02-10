@@ -3,6 +3,7 @@ using UnityEngine;
 public class Bullet : MonoBehaviour
 {
     public int damage;
+    [SerializeField] bool isMelee; // 적의 근접공격 범위가 파괴되지 않도록 조건 추가
 
     void OnCollisionEnter(Collision collision)
     {
@@ -16,7 +17,7 @@ public class Bullet : MonoBehaviour
     void OnTriggerEnter(Collider other)
     {
         // 총알
-        if (other.gameObject.tag == "Wall")
+        if (!isMelee && other.gameObject.tag == "Wall")
         {
             Destroy(gameObject);
         }
