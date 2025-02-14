@@ -5,20 +5,20 @@ using UnityEngine.AI; // Nav 관련 클래스 사용 시 필요
 
 public class Enemy : MonoBehaviour
 {
-    public enum Type { A, B, C }; // 일반형, 돌격형, 원거리형
+    public enum Type { A, B, C, D }; // 일반형, 돌격형, 원거리형, 보스
     public Type enemyType; // 타입을 지정할 변수
 
-    [SerializeField] int maxHealth;
-    [SerializeField] int curHealth;
-    [SerializeField] Transform target;
-    [SerializeField] BoxCollider meleeArea; // 일반형 몬스터 공격 범위
-    [SerializeField] GameObject bullet; // 원거리형 몬스터 총알
-    [SerializeField] bool isChase; // 추적을 결정
-    [SerializeField] bool isAttack;
-
+    [SerializeField] protected int maxHealth;
+    [SerializeField] protected int curHealth;
+    [SerializeField] protected Transform target;
+    [SerializeField] protected BoxCollider meleeArea; // 일반형,보스 몬스터 공격 범위
+    [SerializeField] protected GameObject bullet; // 원거리형,보스 몬스터 총알
+    [SerializeField] protected bool isChase; // 추적을 결정
+    [SerializeField] protected bool isAttack;
+    
     Rigidbody rb;
     BoxCollider boxCollider;
-    Material mat;
+    MeshRenderer[] meshs; // 적의 메쉬 전체를 가져옴
     NavMeshAgent nav;
     Animator anim;
 
@@ -26,13 +26,14 @@ public class Enemy : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         boxCollider = GetComponent<BoxCollider>();
-        mat = GetComponentInChildren<MeshRenderer>().material; // 메쉬 렌더러가 자식에게 있음
+        meshs = GetComponentsInChildren<MeshRenderer>(); // 메쉬 렌더러가 자식에게 있음
         nav = GetComponent<NavMeshAgent>();
         anim = GetComponentInChildren<Animator>();
         rb.linearDamping = 5f; // 마찰력
         rb.angularDamping = 5f; // 회전 마찰력
 
-        Invoke("ChaseStart", 2); // 2초 뒤 추적함
+        if (enemyType != Type.D) // 보스가 아닐 때만
+            Invoke("ChaseStart", 2); // 2초 뒤 추적함
     }
 
     void ChaseStart() // 추적 시작
@@ -43,7 +44,7 @@ public class Enemy : MonoBehaviour
 
     void Update()
     {
-        if (nav.enabled) // nav가 활성화일 때만 추적함
+        if (enemyType != Type.D && nav.enabled) // nav가 활성화일 때만 추적함
         { 
             nav.SetDestination(target.position); // 도착할 목표 위치 지정 함수
             nav.isStopped = !isChase; // isChase가 true면 멈추지 않고, 반대로 false면 stop 함
@@ -61,34 +62,37 @@ public class Enemy : MonoBehaviour
 
     void Targeting()
     {
-        float targetRedius = 0; // 공격 반지름 (폭)
-        float targetRange = 0; // 공격 범위
-
-        // 각 타겟팅 수치 정하기
-        switch (enemyType)
+        if (enemyType != Type.D) // 보스가 아닐 때만
         {
-            case Type.A: // 일반형
-                targetRedius = 1.5f;
-                targetRange = 3f;
-                break;
-            case Type.B: // 돌격형
-                targetRedius = 1f; // 정확하게 돌격하기 위해 폭은 좁게 함
-                targetRange = 12f; // 범위는 일반형의 네배
-                break;
-            case Type.C: // 원거리형
-                targetRedius = 0.5f; // 더 정확하게 발사하기 위함
-                targetRange = 25f; // 범위는 길게
-                break;
-        }
+            float targetRedius = 0; // 공격 반지름 (폭)
+            float targetRange = 0; // 공격 범위
 
-        // 전방으로 구체 레이를 쏨
-        RaycastHit[] rayHits = Physics.SphereCastAll(transform.position,
-            targetRedius, transform.forward, targetRange, LayerMask.GetMask("Player"));
+            // 각 타겟팅 수치 정하기
+            switch (enemyType)
+            {
+                case Type.A: // 일반형
+                    targetRedius = 1.5f;
+                    targetRange = 3f;
+                    break;
+                case Type.B: // 돌격형
+                    targetRedius = 1f; // 정확하게 돌격하기 위해 폭은 좁게 함
+                    targetRange = 12f; // 범위는 일반형의 네배
+                    break;
+                case Type.C: // 원거리형
+                    targetRedius = 0.5f; // 더 정확하게 발사하기 위함
+                    targetRange = 25f; // 범위는 길게
+                    break;
+            }
 
-        // rayHits 변수에 데이터가 들어오면 공격 코루틴 실행
-        if (rayHits.Length > 0 && !isAttack) // 공격 중이지 않을 때만 공격 가능
-        {
-            StartCoroutine(Attack());
+            // 전방으로 구체 레이를 쏨
+            RaycastHit[] rayHits = Physics.SphereCastAll(transform.position,
+                targetRedius, transform.forward, targetRange, LayerMask.GetMask("Player"));
+
+            // rayHits 변수에 데이터가 들어오면 공격 코루틴 실행
+            if (rayHits.Length > 0 && !isAttack) // 공격 중이지 않을 때만 공격 가능
+            {
+                StartCoroutine(Attack());
+            }
         }
     }
 
@@ -195,12 +199,15 @@ public class Enemy : MonoBehaviour
 
     IEnumerator OnDamage(Vector3 reactVec, bool isGrenade)
     {
-        mat.color = Color.red;
+        foreach (MeshRenderer mesh in meshs) // 적의 전체 메쉬를 하나씩 다 red로 변경
+            mesh.material.color = Color.red;
+
         yield return new WaitForSeconds(0.1f);
 
         if (curHealth > 0) // 아직 안죽음
         {
-            mat.color = Color.white;
+            foreach (MeshRenderer mesh in meshs) // 적의 전체 메쉬를 하나씩 다 white로 변경
+                mesh.material.color = Color.white;
 
             // 넉백
             reactVec = reactVec.normalized; // 값 통일
@@ -209,7 +216,9 @@ public class Enemy : MonoBehaviour
         } 
         else // 죽음
         {
-            mat.color = Color.gray;
+            foreach (MeshRenderer mesh in meshs) // 적의 전체 메쉬를 하나씩 다 gray로 변경
+                mesh.material.color = Color.gray;
+
             gameObject.layer = 12; // EnemyDead 레이어로 변경
             isChase = false; // 추적 안함
             nav.enabled = false; // 수류탄 맞고 위로 날라가는걸(y축) 살리기 위해 NavMeshAgent를 끔
@@ -232,7 +241,8 @@ public class Enemy : MonoBehaviour
                 rb.angularVelocity = Vector3.zero; // 회전 안되게 함
             }
             
-            Destroy(gameObject, 4); // 4초 후 파괴
+            if (enemyType != Type.D) // 보스는 파괴 안하고 라운드 종료
+                Destroy(gameObject, 4); // 4초 후 파괴
         }
     }
 }

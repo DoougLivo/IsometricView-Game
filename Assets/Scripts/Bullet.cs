@@ -4,11 +4,12 @@ public class Bullet : MonoBehaviour
 {
     public int damage;
     [SerializeField] bool isMelee; // 적의 근접공격 범위가 파괴되지 않도록 조건 추가
+    [SerializeField] bool isRock; // 보스 바위 플레그 추가
 
     void OnCollisionEnter(Collision collision)
     {
         // 탄피
-        if (collision.gameObject.tag == "Floor") 
+        if (!isRock && collision.gameObject.tag == "Floor") 
         {
             Destroy(gameObject, 3f);
         }
