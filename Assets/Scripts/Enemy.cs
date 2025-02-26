@@ -15,14 +15,15 @@ public class Enemy : MonoBehaviour
     [SerializeField] protected GameObject bullet; // 원거리형,보스 몬스터 총알
     [SerializeField] protected bool isChase; // 추적을 결정
     [SerializeField] protected bool isAttack;
-    
-    Rigidbody rb;
-    BoxCollider boxCollider;
-    MeshRenderer[] meshs; // 적의 메쉬 전체를 가져옴
-    NavMeshAgent nav;
-    Animator anim;
+    [SerializeField] protected bool isDead; // 죽었을 때를 알기 위한 플래그
 
-    void Awake()
+    [SerializeField] protected Rigidbody rb;
+    [SerializeField] protected BoxCollider boxCollider;
+    [SerializeField] protected MeshRenderer[] meshs; // 적의 메쉬 전체를 가져옴
+    [SerializeField] protected NavMeshAgent nav;
+    [SerializeField] protected Animator anim;
+
+    void Awake() // 상속인 경우 Awake() 함수는 자식 스크립트 것만 단독 실행함 (Boss 클래스에만 실행됨)
     {
         rb = GetComponent<Rigidbody>();
         boxCollider = GetComponent<BoxCollider>();
@@ -62,7 +63,7 @@ public class Enemy : MonoBehaviour
 
     void Targeting()
     {
-        if (enemyType != Type.D) // 보스가 아닐 때만
+        if (enemyType != Type.D && !isDead) // 보스가 아닐 때만, 죽지 않았을 때
         {
             float targetRedius = 0; // 공격 반지름 (폭)
             float targetRange = 0; // 공격 범위
@@ -220,6 +221,7 @@ public class Enemy : MonoBehaviour
                 mesh.material.color = Color.gray;
 
             gameObject.layer = 12; // EnemyDead 레이어로 변경
+            isDead = true;
             isChase = false; // 추적 안함
             nav.enabled = false; // 수류탄 맞고 위로 날라가는걸(y축) 살리기 위해 NavMeshAgent를 끔
             anim.SetTrigger("doDie"); // 죽는 애니메이션

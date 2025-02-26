@@ -62,6 +62,8 @@ public class Player : MonoBehaviour
 
     void Awake()
     {
+        Application.targetFrameRate = 60; // 60 프레임 고정
+
         rb = GetComponent<Rigidbody>();
         anim = GetComponentInChildren<Animator>(); // Animator가 자식 오브젝트에 있기 때문
         meshs = GetComponentsInChildren<MeshRenderer>(); // 모든 자식의 MeshRenderer 컴포넌트를 다 가져옴
@@ -370,22 +372,28 @@ public class Player : MonoBehaviour
                 Bullet enemyBullet = other.GetComponent<Bullet>(); // 불릿 스크립트 재활용
                 health -= enemyBullet.damage; // 적 미사일 맞고 피 깎임
 
-                // 근접 공격은 rigidbody가 없고, 미사일에만 rigidbody가 있음
-                if (other.GetComponent<Rigidbody>() != null) // 미사일에 맞으면
-                    Destroy(other.gameObject); // 미사일 파괴
-
-                StartCoroutine(OnDamage()); // 피격 로직
+                // 보스의 근접공격 오브젝트 이름으로 보스 공격을 인지
+                bool isBossAttack = other.name == "Boss Melee Area";
+                StartCoroutine(OnDamage(isBossAttack)); // 피격 로직. 보스의 근접공격임을 구분하기 위함
             }
+
+            // 플레이어의 무적과 관계없이 투사체는 파괴 되도록 함
+            // 근접 공격은 rigidbody가 없고, 미사일에만 rigidbody가 있음
+            if (other.GetComponent<Rigidbody>() != null) // 미사일에 맞으면
+                Destroy(other.gameObject); // 미사일 파괴
         }
     }
 
-    IEnumerator OnDamage()
+    IEnumerator OnDamage(bool isBossAttack)
     {
         isDamage = true;
         foreach(MeshRenderer mesh in meshs)
         {
             mesh.material.color = Color.yellow; // 플레이어 피격 시 색상 변경
         }
+
+        if (isBossAttack) // 보스 근접공격 이면
+            rb.AddForce(transform.forward * -30, ForceMode.Impulse); // 플레이어 뒤로 밀어내기
 
         yield return new WaitForSeconds(1f);
 
@@ -394,6 +402,9 @@ public class Player : MonoBehaviour
         {
             mesh.material.color = Color.white; // 플레이어 피격 끝난 후 색상 변경
         }
+
+        //if (isBossAttack) // 보스 근접공격 이면
+            //rb.angularVelocity = Vector3.zero; // 계속 밀려나는 것을 방지
     }
 
     void OnTriggerStay(Collider other)
