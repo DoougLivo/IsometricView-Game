@@ -46,7 +46,7 @@ public class Player : MonoBehaviour
     Animator anim;
     MeshRenderer[] meshs; // 플레이어의 머리, 몸, 팔, 다리 등 여러 메쉬를 가져와야 해서 배열로 선언함
 
-    GameObject nearObj;
+    GameObject nearObj; // 플레이어 근처에 있는 오브젝트
     Weapon equipWeapon; // 장착중인 무기
 
     [SerializeField] GameObject[] weapons;
@@ -294,7 +294,7 @@ public class Player : MonoBehaviour
 
     void Interaction()
     {
-        
+
         if (iDown && nearObj != null && !isJump && !isDodge && !isReload)
         {
             if (nearObj.tag == "Weapon")
@@ -304,6 +304,11 @@ public class Player : MonoBehaviour
                 hasWeapons[weaponIndex] = true;
 
                 Destroy(nearObj);
+            }
+            else if (nearObj.tag == "Shop")
+            {
+                Shop shop = nearObj.GetComponent<Shop>(); // nearObj(tag가 Shop인 오브젝트)의 Shop 스크립트를 가져옴
+                shop.Enter(this); // 자기자신(player)을 넣어줌
             }
         }
     }
@@ -409,7 +414,7 @@ public class Player : MonoBehaviour
 
     void OnTriggerStay(Collider other)
     {
-        if (other.tag == "Weapon")
+        if (other.tag == "Weapon" || other.tag == "Shop")
         {
             nearObj = other.gameObject;
             //Debug.Log(nearObj.name);
@@ -421,6 +426,12 @@ public class Player : MonoBehaviour
         if (other.tag == "Weapon")
         {
             nearObj = null;
+        }
+        else if (other.tag == "Shop")
+        {
+            Shop shop = nearObj.GetComponent<Shop>(); // Shop 스크립트 가져옴
+            shop.Exit(); // 퇴장 함수 실행
+            nearObj = null; // nearObj 초기화
         }
     }
 }
