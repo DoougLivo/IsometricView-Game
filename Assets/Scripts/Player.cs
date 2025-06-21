@@ -22,13 +22,14 @@ public class Player : MonoBehaviour
     bool isFireReady = true;
     bool isBorder;
     bool isDamage;
+    bool isShop; // 쇼핑중인지 확인
 
     bool sDown1; // 무기 스왑 변수
     bool sDown2;
     bool sDown3;
 
     [SerializeField] int ammo;
-    [SerializeField] int coin;
+    public int coin;
     [SerializeField] int health;
 
     [SerializeField] int maxAmmo;
@@ -67,6 +68,9 @@ public class Player : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         anim = GetComponentInChildren<Animator>(); // Animator가 자식 오브젝트에 있기 때문
         meshs = GetComponentsInChildren<MeshRenderer>(); // 모든 자식의 MeshRenderer 컴포넌트를 다 가져옴
+
+        Debug.Log(PlayerPrefs.GetInt("MaxScore")); // 최고점수 보기 위함
+        //PlayerPrefs.SetInt("MaxScore", 999999); // 유니티에서 제공하는 간단한 저장 기능
     }
 
     // Update is called once per frame
@@ -205,7 +209,7 @@ public class Player : MonoBehaviour
         isFireReady = equipWeapon.rate < fireDelay;
 
         // 공격
-        if (fDown && isFireReady && !isDodge && !isSwap && !isReload)
+        if (fDown && isFireReady && !isDodge && !isSwap && !isReload && !isShop)
         {
             equipWeapon.Use();
             anim.SetTrigger(equipWeapon.type == Weapon.Type.Melee ? "doSwing" : "doShot");
@@ -221,7 +225,7 @@ public class Player : MonoBehaviour
         if (ammo == 0) return; // 플레이어에게 총알이 아예 없을 때
         
         // 재장전
-        if (rDown && !isJump && !isDodge && !isSwap && isFireReady && equipWeapon.curAmmo < equipWeapon.maxAmmo && !isReload)
+        if (rDown && !isJump && !isDodge && !isSwap && isFireReady && equipWeapon.curAmmo < equipWeapon.maxAmmo && !isReload && !isShop)
         {
             anim.SetTrigger("doReload");
             isReload = true;
@@ -241,7 +245,7 @@ public class Player : MonoBehaviour
 
     void Dodge()
     {
-        if (jDown && moveVec != Vector3.zero && !isJump && !isDodge && !isSwap && !isReload) // 움직이는 도중 스페이스바 누르면 회피
+        if (jDown && moveVec != Vector3.zero && !isJump && !isDodge && !isSwap && !isReload && !isShop) // 움직이는 도중 스페이스바 누르면 회피
         {
             dodgeVec = moveVec;
             speed *= 2; // 회피는 이동속도만 2배로 상승하도록 설정
@@ -272,7 +276,7 @@ public class Player : MonoBehaviour
         if (sDown2) weaponIndex = 1;
         if (sDown3) weaponIndex = 2;
 
-        if ((sDown1 || sDown2 || sDown3) && !isJump && !isDodge && !isReload)
+        if ((sDown1 || sDown2 || sDown3) && !isJump && !isDodge && !isReload && !isShop)
         {
             if (equipWeapon != null) equipWeapon.gameObject.SetActive(false); // 장작중인 무기가 있을 때만 비활성화 해야 에러가 나지 않음
             equipWeaponIndex = weaponIndex;
@@ -309,6 +313,7 @@ public class Player : MonoBehaviour
             {
                 Shop shop = nearObj.GetComponent<Shop>(); // nearObj(tag가 Shop인 오브젝트)의 Shop 스크립트를 가져옴
                 shop.Enter(this); // 자기자신(player)을 넣어줌
+                isShop = true;
             }
         }
     }
@@ -431,6 +436,7 @@ public class Player : MonoBehaviour
         {
             Shop shop = nearObj.GetComponent<Shop>(); // Shop 스크립트 가져옴
             shop.Exit(); // 퇴장 함수 실행
+            isShop = false;
             nearObj = null; // nearObj 초기화
         }
     }
