@@ -8,8 +8,8 @@ public class Enemy : MonoBehaviour
     public enum Type { A, B, C, D }; // 일반형, 돌격형, 원거리형, 보스
     public Type enemyType; // 타입을 지정할 변수
 
-    [SerializeField] protected int maxHealth;
-    [SerializeField] protected int curHealth;
+    public int maxHealth;
+    public int curHealth;
     [SerializeField] protected Transform target;
     [SerializeField] protected BoxCollider meleeArea; // 일반형,보스 몬스터 공격 범위
     [SerializeField] protected GameObject bullet; // 원거리형,보스 몬스터 총알

@@ -24,7 +24,7 @@ public class Shop : MonoBehaviour
     public void Exit() // 상점 존에서 나갔을 때
     {
         anim.SetTrigger("doHello"); // 상점 나가면 인사 애니메이션 발동
-        uiGroup.anchoredPosition = Vector3.down * 1000; // UI를 화면 아래로 내림
+        uiGroup.anchoredPosition = Vector3.down * 1100; // UI를 화면 아래로 내림
     }
 
     public void Buy(int index) // 물건 구매 함수 (어떤 물건인지 파악하기 위한 인덱스)

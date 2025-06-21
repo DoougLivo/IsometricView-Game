@@ -28,14 +28,15 @@ public class Player : MonoBehaviour
     bool sDown2;
     bool sDown3;
 
-    [SerializeField] int ammo;
+    public int ammo;
     public int coin;
-    [SerializeField] int health;
+    public int health;
+    public int score;
 
-    [SerializeField] int maxAmmo;
-    [SerializeField] int maxCoin;
-    [SerializeField] int maxHealth;
-    [SerializeField] int maxHasGrenades;
+    public int maxAmmo;
+    public int maxCoin;
+    public int maxHealth;
+    public int maxHasGrenades;
 
     [SerializeField] int jPower;
     [SerializeField] float speed;
@@ -48,12 +49,12 @@ public class Player : MonoBehaviour
     MeshRenderer[] meshs; // 플레이어의 머리, 몸, 팔, 다리 등 여러 메쉬를 가져와야 해서 배열로 선언함
 
     GameObject nearObj; // 플레이어 근처에 있는 오브젝트
-    Weapon equipWeapon; // 장착중인 무기
+    public Weapon equipWeapon; // 장착중인 무기
 
     [SerializeField] GameObject[] weapons;
-    [SerializeField] bool[] hasWeapons;
+    public bool[] hasWeapons;
     [SerializeField] GameObject[] grenades;
-    [SerializeField] int hasGrenades;
+    public int hasGrenades;
     [SerializeField] GameObject grenadeObj;
 
     [SerializeField] Camera followCamera;
