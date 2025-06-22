@@ -10,7 +10,10 @@ public class Enemy : MonoBehaviour
 
     public int maxHealth;
     public int curHealth;
-    [SerializeField] protected Transform target;
+    public int score; // 점수
+    public GameObject[] coins; // 코인 드랍
+
+    public Transform target;
     [SerializeField] protected BoxCollider meleeArea; // 일반형,보스 몬스터 공격 범위
     [SerializeField] protected GameObject bullet; // 원거리형,보스 몬스터 총알
     [SerializeField] protected bool isChase; // 추적을 결정
@@ -226,6 +229,13 @@ public class Enemy : MonoBehaviour
             nav.enabled = false; // 수류탄 맞고 위로 날라가는걸(y축) 살리기 위해 NavMeshAgent를 끔
             anim.SetTrigger("doDie"); // 죽는 애니메이션
             
+            // 적 죽으면 점수 부여
+            Player player = target.GetComponent<Player>(); // 플레이어 스크립트 가져옴
+            player.score += score; // 스코어 추가
+            // 동전 드랍
+            int ranCoin = Random.Range(0, 3); // 0부터 2까지 랜덤 코인 뽑음 (금,은,동)
+            Instantiate(coins[ranCoin], transform.position, Quaternion.identity); // 적 죽은 위치에 동전 소환
+
             // 넉백
             if (isGrenade) // 수류탄
             {
@@ -242,9 +252,8 @@ public class Enemy : MonoBehaviour
                 rb.AddForce(reactVec * 5, ForceMode.Impulse); // 넉백
                 rb.angularVelocity = Vector3.zero; // 회전 안되게 함
             }
-            
-            if (enemyType != Type.D) // 보스는 파괴 안하고 라운드 종료
-                Destroy(gameObject, 4); // 4초 후 파괴
+
+            Destroy(gameObject, 4); // 죽으면 4초 후 파괴 (보스 포함)
         }
     }
 }
