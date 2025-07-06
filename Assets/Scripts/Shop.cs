@@ -15,6 +15,9 @@ public class Shop : MonoBehaviour
     public Text talkText; // 금액 부족을 알리기 위한 대사 텍스트
     public string[] talkData;
 
+    // 오디오 소스
+    public AudioSource buySound; // 구매 소리
+
     public void Enter(Player player) // 상점 존에 들어갔을 때
     {
         enterPlayer = player;
@@ -39,6 +42,7 @@ public class Shop : MonoBehaviour
 
         // 돈이 있을 때
         enterPlayer.coin -= price; // 플레이어의 지갑에서 물건가격을 뺌
+        buySound.Play(); // 구매 소리 재생
         Vector3 ranVec = Vector3.right * Random.Range(-3, 3) + Vector3.forward * Random.Range(-3, 3); // 랜덤 위치 생성
         Instantiate(itemObj[index], itemPos[index].position + ranVec, itemPos[index].rotation); // 물건 생성
     }

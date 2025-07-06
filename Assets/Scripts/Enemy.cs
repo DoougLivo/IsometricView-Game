@@ -13,6 +13,7 @@ public class Enemy : MonoBehaviour
     public int score; // 점수
     public GameObject[] coins; // 코인 드랍
 
+    public GameManager manager; // 게임 매니저
     public Transform target;
     [SerializeField] protected BoxCollider meleeArea; // 일반형,보스 몬스터 공격 범위
     [SerializeField] protected GameObject bullet; // 원거리형,보스 몬스터 총알
@@ -206,10 +207,10 @@ public class Enemy : MonoBehaviour
         foreach (MeshRenderer mesh in meshs) // 적의 전체 메쉬를 하나씩 다 red로 변경
             mesh.material.color = Color.red;
 
-        yield return new WaitForSeconds(0.1f);
-
         if (curHealth > 0) // 아직 안죽음
         {
+            yield return new WaitForSeconds(0.1f);
+
             foreach (MeshRenderer mesh in meshs) // 적의 전체 메쉬를 하나씩 다 white로 변경
                 mesh.material.color = Color.white;
 
@@ -235,6 +236,23 @@ public class Enemy : MonoBehaviour
             // 동전 드랍
             int ranCoin = Random.Range(0, 3); // 0부터 2까지 랜덤 코인 뽑음 (금,은,동)
             Instantiate(coins[ranCoin], transform.position, Quaternion.identity); // 적 죽은 위치에 동전 소환
+
+            // 몬스터가 죽으면 각 타입에 맞게 숫자 감소
+            switch (enemyType)
+            {
+                case Type.A:
+                    manager.enemyCntA--;
+                    break;
+                case Type.B:
+                    manager.enemyCntB--;
+                    break;
+                case Type.C:
+                    manager.enemyCntC--;
+                    break;
+                case Type.D:
+                    manager.enemyCntD--;
+                    break;
+            }
 
             // 넉백
             if (isGrenade) // 수류탄

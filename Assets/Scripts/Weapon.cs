@@ -17,6 +17,8 @@ public class Weapon : MonoBehaviour
     public GameObject bullet;
     public Transform bulletCasePos;
     public GameObject bulletCase;
+    
+    public int weaponType; // 핸드건과 서브머신건 구분용
 
     public void Use()
     {

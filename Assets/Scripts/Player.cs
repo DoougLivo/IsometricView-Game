@@ -1,6 +1,7 @@
 using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.InputSystem.Processors;
 using UnityEngine.Rendering;
 
 public class Player : MonoBehaviour
@@ -23,6 +24,8 @@ public class Player : MonoBehaviour
     bool isBorder;
     bool isDamage;
     bool isShop; // 쇼핑중인지 확인
+    bool isDead; // 죽음 확인
+    bool isMove; // 움직이는지 확인
 
     bool sDown1; // 무기 스왑 변수
     bool sDown2;
@@ -58,9 +61,22 @@ public class Player : MonoBehaviour
     [SerializeField] GameObject grenadeObj;
 
     [SerializeField] Camera followCamera;
+    public GameManager manager; // 게임 매니저 선언
 
     int equipWeaponIndex = -1; // 초기값 설정
     float fireDelay;
+
+    // 오디오 소스
+    public AudioSource jumpSound; // 점프 소리
+    public AudioSource equipSound; // 장착 소리
+    public AudioSource handGunSound; // 핸드건 소리
+    public AudioSource handGunReloadSound; // 핸드건 재장전 소리
+    public AudioSource subMachineGunSound; // 서브머신건 소리
+    public AudioSource subMachineGunReloadSound; // 서브머신건 재장전 소리
+    public AudioSource noBulletSound; // 총알 없을 때 소리
+    public AudioSource dodgeSound; // 닷지 소리
+    public AudioSource healSound; // 회복 소리
+    //public AudioSource stepSound; // 발소리
 
     void Awake()
     {
@@ -130,8 +146,8 @@ public class Player : MonoBehaviour
         if (isDodge) // 회피 중일 때
             moveVec = dodgeVec; // 움직임 벡터를 회피 벡터로 바꿈 (회피중엔 방향 못바꾸게 함)
 
-        if (/*isSwap*/!isFireReady/*isReload*/) // 공격, 스왑할 때 움직이지 못하게 함, 리로드
-            moveVec = Vector3.zero;
+        if (/*isSwap*/!isFireReady/*isReload*/ || isDead) // 공격, 스왑할 때 움직이지 못하게 함, 리로드
+            moveVec = Vector3.zero;                         // 죽으면 움직이지 못하게 함
 
         if (!isBorder) { // 벽을 넘어가지 못하게 막음
             transform.position += moveVec * speed * (wDown ? 0.3f : 1f) * Time.deltaTime;
@@ -141,13 +157,15 @@ public class Player : MonoBehaviour
         anim.SetBool("isWalk", wDown);
     }
 
+    
+
     void Turn()
     {
         // 키보드에 의한 회전
         transform.LookAt(transform.position + moveVec); // 나아가는 방향으로 바라보게 함
 
         // 마우스에 의한 회전
-        if (fDown) { // 마우스 클릭 시
+        if (fDown && !isDead) { // 마우스 클릭 시, 플레이어가 안죽었을 때만
             Ray ray = followCamera.ScreenPointToRay(Input.mousePosition); // 마우스 방향으로 레이를 쏨
             RaycastHit rayHit; // 정보를 저장할 변수
             if (Physics.Raycast(ray, out rayHit, 100)) // out - return처럼 반환값을 변수에 저장하는 키워드
@@ -161,12 +179,13 @@ public class Player : MonoBehaviour
 
     void Jump()
     {
-        if (jDown && moveVec == Vector3.zero && !isJump && !isDodge && !isSwap && !isReload) // 움직이지 않을 때 스페이스바 누르면 점프
+        if (jDown && moveVec == Vector3.zero && !isJump && !isDodge && !isSwap && !isReload && !isDead) // 움직이지 않을 때 스페이스바 누르면 점프
         {
             rb.AddForce(Vector3.up * jPower, ForceMode.Impulse);
             anim.SetBool("isJump", true);
             anim.SetTrigger("doJump");
             isJump = true;
+            jumpSound.Play(); // 점프 사운드 재생
         }
     }
 
@@ -174,7 +193,7 @@ public class Player : MonoBehaviour
     {
         if (hasGrenades == 0) return;
 
-        if (gDown && !isReload && !isSwap)
+        if (gDown && !isReload && !isSwap && !isDead)
         {
             Ray ray = followCamera.ScreenPointToRay(Input.mousePosition); // 마우스 방향으로 레이를 쏨
             RaycastHit rayHit; // 정보를 저장할 변수
@@ -210,10 +229,25 @@ public class Player : MonoBehaviour
         isFireReady = equipWeapon.rate < fireDelay;
 
         // 공격
-        if (fDown && isFireReady && !isDodge && !isSwap && !isReload && !isShop)
+        if (fDown && isFireReady && !isDodge && !isSwap && !isReload && !isShop && !isDead)
         {
+            if (equipWeapon.curAmmo == 0) // 총알이 없을 때
+            {
+                noBulletSound.Play(); // 총알 없음을 알리는 소리
+                return;
+            }
+
             equipWeapon.Use();
             anim.SetTrigger(equipWeapon.type == Weapon.Type.Melee ? "doSwing" : "doShot");
+
+            // 원거리 무기 사운드
+            if (equipWeapon.type == Weapon.Type.Range)
+            {
+                if (equipWeapon.weaponType == 1) // 장착중인 무기가 핸드건 일때
+                    handGunSound.Play();
+                else if (equipWeapon.weaponType == 2) // 장착중인 무기가 서브머신건 일때
+                    subMachineGunSound.Play();
+            }
 
             fireDelay = 0; // 0으로 초기화 (쿨타임)
         }
@@ -226,10 +260,16 @@ public class Player : MonoBehaviour
         if (ammo == 0) return; // 플레이어에게 총알이 아예 없을 때
         
         // 재장전
-        if (rDown && !isJump && !isDodge && !isSwap && isFireReady && equipWeapon.curAmmo < equipWeapon.maxAmmo && !isReload && !isShop)
+        if (rDown && !isJump && !isDodge && !isSwap && isFireReady && equipWeapon.curAmmo < equipWeapon.maxAmmo && !isReload && !isShop && !isDead)
         {
             anim.SetTrigger("doReload");
             isReload = true;
+
+            // 재장전 소리
+            if (equipWeapon.weaponType == 1) // 장착중인 무기가 핸드건 일때
+                handGunReloadSound.Play();
+            else if (equipWeapon.weaponType == 2) // 장착중인 무기가 서브머신건 일때
+                subMachineGunReloadSound.Play();
 
             Invoke("ReloadOut", 3f);
         }
@@ -246,12 +286,13 @@ public class Player : MonoBehaviour
 
     void Dodge()
     {
-        if (jDown && moveVec != Vector3.zero && !isJump && !isDodge && !isSwap && !isReload && !isShop) // 움직이는 도중 스페이스바 누르면 회피
+        if (jDown && moveVec != Vector3.zero && !isJump && !isDodge && !isSwap && !isReload && !isShop && !isDead) // 움직이는 도중 스페이스바 누르면 회피
         {
             dodgeVec = moveVec;
             speed *= 2; // 회피는 이동속도만 2배로 상승하도록 설정
             anim.SetTrigger("doDodge");
             isDodge = true;
+            dodgeSound.Play();
 
             Invoke("DodgeOut", 0.5f); // 0.5초 후 회피를 다시 false로
         }
@@ -277,7 +318,7 @@ public class Player : MonoBehaviour
         if (sDown2) weaponIndex = 1;
         if (sDown3) weaponIndex = 2;
 
-        if ((sDown1 || sDown2 || sDown3) && !isJump && !isDodge && !isReload && !isShop)
+        if ((sDown1 || sDown2 || sDown3) && !isJump && !isDodge && !isReload && !isShop && !isDead)
         {
             if (equipWeapon != null) equipWeapon.gameObject.SetActive(false); // 장작중인 무기가 있을 때만 비활성화 해야 에러가 나지 않음
             equipWeaponIndex = weaponIndex;
@@ -300,13 +341,14 @@ public class Player : MonoBehaviour
     void Interaction()
     {
 
-        if (iDown && nearObj != null && !isJump && !isDodge && !isReload)
+        if (iDown && nearObj != null && !isJump && !isDodge && !isReload && !isDead)
         {
             if (nearObj.tag == "Weapon")
             {
                 Item item = nearObj.GetComponent<Item>();
                 int weaponIndex = item.value;
                 hasWeapons[weaponIndex] = true;
+                equipSound.Play(); // 장착 소리 재생
 
                 Destroy(nearObj);
             }
@@ -366,6 +408,7 @@ public class Player : MonoBehaviour
                     break;
                 case Item.Type.Heart:
                     health += item.value;
+                    healSound.Play();
                     if (health > maxHealth) health = maxHealth;
                     break;
                 case Item.Type.Grenade:
@@ -381,7 +424,8 @@ public class Player : MonoBehaviour
             if (!isDamage) // 대미지를 입으면 무적 시간을 주기 위함
             {
                 Bullet enemyBullet = other.GetComponent<Bullet>(); // 불릿 스크립트 재활용
-                health -= enemyBullet.damage; // 적 미사일 맞고 피 깎임
+                if (health > 0) // 체력이 0 이상일 때만 깎임
+                    health -= enemyBullet.damage; // 적 미사일 맞고 피 깎임
 
                 // 보스의 근접공격 오브젝트 이름으로 보스 공격을 인지
                 bool isBossAttack = other.name == "Boss Melee Area";
@@ -397,25 +441,50 @@ public class Player : MonoBehaviour
 
     IEnumerator OnDamage(bool isBossAttack)
     {
-        isDamage = true;
-        foreach(MeshRenderer mesh in meshs)
-        {
-            mesh.material.color = Color.yellow; // 플레이어 피격 시 색상 변경
-        }
+        if (!isDead) { // 캐릭터가 죽으면 피격되지 않도록 함
+            isDamage = true;
+            foreach (MeshRenderer mesh in meshs)
+            {
+                mesh.material.color = Color.yellow; // 플레이어 피격 시 색상 변경
+            }
 
-        if (isBossAttack) // 보스 근접공격 이면
-            rb.AddForce(transform.forward * -30, ForceMode.Impulse); // 플레이어 뒤로 밀어내기
+            if (isBossAttack) // 보스 근접공격 이면
+                rb.AddForce(transform.forward * -30, ForceMode.Impulse); // 플레이어 뒤로 밀어내기
 
-        yield return new WaitForSeconds(1f);
+            // 플레이어의 체력이 0 이하고, 이미 죽었으면 함수 실행 안함
+            if (health <= 0 && !isDead)
+                OnDie(); // 플레이어 죽음 함수
 
-        isDamage = false;
-        foreach (MeshRenderer mesh in meshs)
-        {
-            mesh.material.color = Color.white; // 플레이어 피격 끝난 후 색상 변경
-        }
+            yield return new WaitForSeconds(1f);
 
-        //if (isBossAttack) // 보스 근접공격 이면
+            isDamage = false;
+            foreach (MeshRenderer mesh in meshs)
+            {
+                mesh.material.color = Color.white; // 플레이어 피격 끝난 후 색상 변경
+            }
+
+            //if (isBossAttack) // 보스 근접공격 이면
             //rb.angularVelocity = Vector3.zero; // 계속 밀려나는 것을 방지
+            
+            if (isDead) // 죽으면 움직이지 않도록 고정함
+            {
+                rb.angularVelocity = Vector3.zero;
+            }
+        }
+    }
+
+    // 플레이어 죽음 처리
+    void OnDie()
+    {
+        anim.SetTrigger("doDie"); // 죽음 애니메이션
+        isDead = true;
+        StartCoroutine("WaitingGameOver"); // 몇초 기다린 후 게임오버 함수 실행
+    }
+
+    IEnumerator WaitingGameOver()
+    {
+        yield return new WaitForSeconds(3); // 3초 후 실행
+        manager.GameOver(); // 게임 오버 함수 호출
     }
 
     void OnTriggerStay(Collider other)
@@ -436,9 +505,15 @@ public class Player : MonoBehaviour
         else if (other.tag == "Shop")
         {
             Shop shop = nearObj.GetComponent<Shop>(); // Shop 스크립트 가져옴
+            //StartCoroutine("Wait");
             shop.Exit(); // 퇴장 함수 실행
             isShop = false;
             nearObj = null; // nearObj 초기화
         }
     }
+
+    //IEnumerator Wait() // 함수 실행 순서 꼬임 방지
+    //{
+    //    yield return new WaitForSeconds(0.1f);
+    //}
 }

@@ -7,6 +7,8 @@ public class Grenade : MonoBehaviour
     [SerializeField] GameObject effectObj;
     [SerializeField] Rigidbody rb;
 
+    public AudioSource grenadeSound; // 폭탄 소리
+
     void Start()
     {
         StartCoroutine(Explosion());
@@ -19,6 +21,7 @@ public class Grenade : MonoBehaviour
         rb.angularVelocity = Vector3.zero; // 회전 0
         meshObj.SetActive(false); // 메쉬는 끄고
         effectObj.SetActive(true); // 이펙트는 활성화
+        grenadeSound.Play(); // 수류탄 소리 재생
 
         // 피격 범위 설정 / SphereCastAll - 구체 모양의 레이캐스팅 (모든 오브젝트)
         RaycastHit[] rayHits = Physics.SphereCastAll(transform.position, 
