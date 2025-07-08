@@ -101,6 +101,7 @@ MonoBehaviour:
   effectObj: {fileID: 6133965045326537818}
   rb: {fileID: 3341393206999856507}
   grenadeSound: {fileID: 1732703708878599241}
+  grenadeDamage: 100
 --- !u!1 &5032067384690778462
 GameObject:
   m_ObjectHideFlags: 0

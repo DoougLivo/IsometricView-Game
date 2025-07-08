@@ -9,6 +9,8 @@ public class Grenade : MonoBehaviour
 
     public AudioSource grenadeSound; // 폭탄 소리
 
+    public int grenadeDamage; // 수류탄 대미지
+
     void Start()
     {
         StartCoroutine(Explosion());
@@ -31,7 +33,7 @@ public class Grenade : MonoBehaviour
         // foreach 문으로 수류탄 범위 적들의 피격함수를 호출
         foreach (RaycastHit hitObj in rayHits)
         {
-            hitObj.transform.GetComponent<Enemy>().HitByGrenade(transform.position);
+            hitObj.transform.GetComponent<Enemy>().HitByGrenade(transform.position, grenadeDamage);
         }
 
         Destroy(gameObject, 4); // 수류탄은 파티클이 사라지는 시간을 고려하여 호출 (4초 정도 후 파괴)

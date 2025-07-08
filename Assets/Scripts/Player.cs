@@ -23,13 +23,14 @@ public class Player : MonoBehaviour
     bool isFireReady = true;
     bool isBorder;
     bool isDamage;
-    bool isShop; // 쇼핑중인지 확인
+    public bool isShop; // 쇼핑중인지 확인
     bool isDead; // 죽음 확인
     bool isMove; // 움직이는지 확인
 
     bool sDown1; // 무기 스왑 변수
     bool sDown2;
     bool sDown3;
+    public bool isEsc;
 
     public int ammo;
     public int coin;
@@ -42,7 +43,12 @@ public class Player : MonoBehaviour
     public int maxHasGrenades;
 
     [SerializeField] int jPower;
-    [SerializeField] float speed;
+    public float speed;
+    public int level;
+    public int maxLevel;
+    public int curExp;
+    public int maxExp;
+    public int statePoint;
 
     Vector3 moveVec;
     Vector3 dodgeVec;
@@ -69,10 +75,14 @@ public class Player : MonoBehaviour
     // 오디오 소스
     public AudioSource jumpSound; // 점프 소리
     public AudioSource equipSound; // 장착 소리
+    public AudioSource hammerSound; // 해머 소리
+    public AudioSource hammerSwapSound; // 해머 스왑 소리
     public AudioSource handGunSound; // 핸드건 소리
     public AudioSource handGunReloadSound; // 핸드건 재장전 소리
+    public AudioSource handGunSwapSound; // 핸드건 스왑 소리
     public AudioSource subMachineGunSound; // 서브머신건 소리
     public AudioSource subMachineGunReloadSound; // 서브머신건 재장전 소리
+    public AudioSource subMachineGunSwapSound; // 서브머신건 스왑 소리
     public AudioSource noBulletSound; // 총알 없을 때 소리
     public AudioSource dodgeSound; // 닷지 소리
     public AudioSource healSound; // 회복 소리
@@ -146,7 +156,7 @@ public class Player : MonoBehaviour
         if (isDodge) // 회피 중일 때
             moveVec = dodgeVec; // 움직임 벡터를 회피 벡터로 바꿈 (회피중엔 방향 못바꾸게 함)
 
-        if (/*isSwap*/!isFireReady/*isReload*/ || isDead) // 공격, 스왑할 때 움직이지 못하게 함, 리로드
+        if (/*isSwap*/!isFireReady/*isReload*/ || isDead || isEsc) // 공격, 스왑할 때 움직이지 못하게 함, 리로드
             moveVec = Vector3.zero;                         // 죽으면 움직이지 못하게 함
 
         if (!isBorder) { // 벽을 넘어가지 못하게 막음
@@ -165,7 +175,7 @@ public class Player : MonoBehaviour
         transform.LookAt(transform.position + moveVec); // 나아가는 방향으로 바라보게 함
 
         // 마우스에 의한 회전
-        if (fDown && !isDead) { // 마우스 클릭 시, 플레이어가 안죽었을 때만
+        if (fDown && !isDead && !isEsc) { // 마우스 클릭 시, 플레이어가 안죽었을 때만
             Ray ray = followCamera.ScreenPointToRay(Input.mousePosition); // 마우스 방향으로 레이를 쏨
             RaycastHit rayHit; // 정보를 저장할 변수
             if (Physics.Raycast(ray, out rayHit, 100)) // out - return처럼 반환값을 변수에 저장하는 키워드
@@ -248,6 +258,10 @@ public class Player : MonoBehaviour
                 else if (equipWeapon.weaponType == 2) // 장착중인 무기가 서브머신건 일때
                     subMachineGunSound.Play();
             }
+            else if (equipWeapon.type == Weapon.Type.Melee) // 해머 일때
+            {
+                StartCoroutine(WaitHammerAttackSound()); // 공격 모션과 사운드 타이밍을 일치시키기 위함
+            }
 
             fireDelay = 0; // 0으로 초기화 (쿨타임)
         }
@@ -327,6 +341,14 @@ public class Player : MonoBehaviour
 
             anim.SetTrigger("doSwap");
 
+            // 무기별 스왑 사운드
+            if (weaponIndex == 0)
+                hammerSwapSound.Play();
+            else if (weaponIndex == 1)
+                handGunSwapSound.Play();
+            else if (weaponIndex == 2)
+                subMachineGunSwapSound.Play();
+
             isSwap = true;
 
             Invoke("SwapOut", 0.4f);
@@ -378,6 +400,12 @@ public class Player : MonoBehaviour
     {
         FreezeRotation();
         StopToWall();
+
+        // 레벨업 체크
+        if (curExp >= maxExp)
+        {
+            PlayerLevelUp();
+        }
     }
 
     void OnCollisionEnter(Collision collision)
@@ -487,12 +515,48 @@ public class Player : MonoBehaviour
         manager.GameOver(); // 게임 오버 함수 호출
     }
 
+    IEnumerator WaitHammerAttackSound()
+    {
+        yield return new WaitForSeconds(0.3f);
+        hammerSound.Play();
+    }
+
     void OnTriggerStay(Collider other)
     {
         if (other.tag == "Weapon" || other.tag == "Shop")
         {
             nearObj = other.gameObject;
             //Debug.Log(nearObj.name);
+        }
+    }
+    
+    // 레벨업
+    public void PlayerLevelUp()
+    {
+        int tmpExp;
+        if (curExp - maxExp > 0)
+        {
+            //Debug.Log("~ "+curExp + "/" + maxExp);
+            while (curExp - maxExp > 0)
+            {
+                //Debug.Log("~~ "+curExp + "/" + maxExp);
+                tmpExp = curExp - maxExp;
+                level += 1;
+                statePoint += 5;
+                maxExp *= 2;
+                curExp = tmpExp;
+                //Debug.Log("레벨업! " + level + "레벨");
+                //Debug.Log("업 후 경험치1 : " + curExp + "/" + maxExp);
+            }
+        }
+        else
+        {
+            level += 1;
+            statePoint += 5;
+            maxExp *= 2;
+            curExp = 0;
+            //Debug.Log("레벨업! " + level + "레벨");
+            //Debug.Log("업 후 경험치2 : " + curExp + "/" + maxExp);
         }
     }
 
@@ -505,15 +569,9 @@ public class Player : MonoBehaviour
         else if (other.tag == "Shop")
         {
             Shop shop = nearObj.GetComponent<Shop>(); // Shop 스크립트 가져옴
-            //StartCoroutine("Wait");
-            shop.Exit(); // 퇴장 함수 실행
             isShop = false;
             nearObj = null; // nearObj 초기화
+            shop.Exit(); // 퇴장 함수 실행
         }
     }
-
-    //IEnumerator Wait() // 함수 실행 순서 꼬임 방지
-    //{
-    //    yield return new WaitForSeconds(0.1f);
-    //}
 }

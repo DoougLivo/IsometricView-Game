@@ -122,10 +122,12 @@ MonoBehaviour:
   maxHealth: 200
   curHealth: 200
   score: 500
+  enemyExp: 150
   coins:
   - {fileID: 2269593840526617942, guid: 248b4899b2aa6b94387ede1d979be196, type: 3}
   - {fileID: 6102000803619087885, guid: 04bb21f4e87a2824ead7060a279dcc98, type: 3}
   - {fileID: 6032312877860605463, guid: 7e4bb2847d20ecf49b5c38abbd17e8a6, type: 3}
+  manager: {fileID: 0}
   target: {fileID: 0}
   meleeArea: {fileID: 0}
   bullet: {fileID: 8511669104151817466, guid: 74b6e3bbc7dabee4cba216d19ab7b3cb, type: 3}

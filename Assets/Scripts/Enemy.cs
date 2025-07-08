@@ -11,6 +11,7 @@ public class Enemy : MonoBehaviour
     public int maxHealth;
     public int curHealth;
     public int score; // 점수
+    public int enemyExp;
     public GameObject[] coins; // 코인 드랍
 
     public GameManager manager; // 게임 매니저
@@ -167,7 +168,7 @@ public class Enemy : MonoBehaviour
             Vector3 reactVec = transform.position - other.transform.position;
             StartCoroutine(OnDamage(reactVec, false));
 
-            Debug.Log("Melee : " + curHealth);
+            //Debug.Log("Melee : " + curHealth);
         } else if (other.tag == "Bullet")
         {
             Bullet bullet = other.GetComponent<Bullet>();
@@ -178,7 +179,7 @@ public class Enemy : MonoBehaviour
             Destroy(other.gameObject); // 총알 파괴
             StartCoroutine(OnDamage(reactVec, false));
 
-            Debug.Log("Range : " + curHealth);
+            //Debug.Log("Range : " + curHealth);
         }
 
         //// 플레이어 감지
@@ -193,9 +194,9 @@ public class Enemy : MonoBehaviour
     //    isChase = false;
     //}
 
-    public void HitByGrenade(Vector3 explosionPos)
+    public void HitByGrenade(Vector3 explosionPos, int grenadeDamage)
     {
-        curHealth -= 100; // 수류탄 대미지
+        curHealth -= grenadeDamage; // 수류탄 대미지
 
         // 피격,넉백 구현
         Vector3 reacVec = transform.position - explosionPos;
@@ -236,6 +237,8 @@ public class Enemy : MonoBehaviour
             // 동전 드랍
             int ranCoin = Random.Range(0, 3); // 0부터 2까지 랜덤 코인 뽑음 (금,은,동)
             Instantiate(coins[ranCoin], transform.position, Quaternion.identity); // 적 죽은 위치에 동전 소환
+            player.curExp += enemyExp; // 경험치 증가
+            Debug.Log("경험치 : " + player.curExp + "/" + player.maxExp);
 
             // 몬스터가 죽으면 각 타입에 맞게 숫자 감소
             switch (enemyType)

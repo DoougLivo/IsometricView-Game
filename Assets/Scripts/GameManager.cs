@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Collections;
 using UnityEngine.SceneManagement; // Scene 관련 함수 사용 시 필요함
+using UnityEditor;
 
 public class GameManager : MonoBehaviour
 {
@@ -47,6 +48,17 @@ public class GameManager : MonoBehaviour
     public Text curScoreTxt;
     public Text bestTxt;
     public Text savedMaxScoreTxt;
+    public Image descImage;
+
+    private bool isEsc;
+    public Image returnBtn;
+    public Text playerLvTxt;
+    public RectTransform ExpBar;
+    public RectTransform ExpGaugeBar;
+    public Image enemyHPBar;
+    public Image enemyHPBarFill;
+    public Transform HPBarTarget;
+    public Vector3 HPBarOffset = new Vector3(0, 2.0f, 0);
 
     public void Awake()
     {
@@ -71,6 +83,26 @@ public class GameManager : MonoBehaviour
         gamePanel.SetActive(true);
 
         player.gameObject.SetActive(true);
+    }
+
+    public void GoBack()
+    {
+        menuCam.SetActive(false);
+        gameCam.SetActive(true);
+
+        menuPanel.SetActive(false);
+        gamePanel.SetActive(true);
+
+        player.gameObject.SetActive(true);
+
+        if (Time.timeScale == 0)
+            Time.timeScale = 1; // 일시정지 풀기
+
+        if (isEsc)
+        {
+            isEsc = false;
+            player.isEsc = false;
+        }
     }
 
     // 게임 오버
@@ -161,6 +193,9 @@ public class GameManager : MonoBehaviour
                 enemy.target = player.transform; // 플레이어의 위치를 타겟으로 지정함
                 enemy.manager = this; // GameManager를 Enemy 스크립트에 넣음
 
+                // 적 체력 바
+                enemyHPBar.transform.position = 
+
                 // 적 생성 후, 사용된 첫번째 데이터(인덱스 0)는 RemoveAt() 함수로 삭제함
                 enemyList.RemoveAt(0);
 
@@ -199,10 +234,52 @@ public class GameManager : MonoBehaviour
         stage++; // 스테이지 값 1 증가
     }
 
+    // 조작키 설명창
+    public void DescButton()
+    {
+        descImage.gameObject.SetActive(true);
+    }
+
+    // 설명창 닫기
+    public void DescExitButton()
+    {
+        descImage.gameObject.SetActive(false);
+    }
+
+    // 게임 종료
+    public void ExitGame()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+    Application.Quit(); // 애플리케이션 종료
+#endif
+    }
+
+    // 레벨업
+    public void LevelUp()
+    {
+        //if (player.curExp >= player.maxExp)
+        //{
+        //    player.PlayerLevelUp();
+        //}
+    }
+
     void Update()
     {
         if (isBattle)
             playTime += Time.deltaTime;
+
+        // 게임판넬이 활성화일 때만 esc 가능
+        if (Input.GetKey("escape") && !isEsc && gamePanel.activeSelf)
+        {
+            Time.timeScale = 0; // 일시정지
+            isEsc = true;
+            player.isEsc = true;
+            menuPanel.SetActive(true);
+            returnBtn.gameObject.SetActive(true);
+            gamePanel.SetActive(false);
+        };
     }
 
     void LateUpdate() // Update()가 끝난 후 호출되는 생명주기, 데이터 처리 후에 호출할 때 사용함
@@ -231,6 +308,9 @@ public class GameManager : MonoBehaviour
         else // 장착 무기가 총일 때
             playerAmmoTxt.text = player.equipWeapon.curAmmo + " / " + player.ammo;
 
+        // 플레이어 레벨
+        playerLvTxt.text = "LV " + player.level;
+
         // 무기 UI - 무기 아이콘은 보유 상황에 따라 알파값만 변경
         weapon1Img.color = new Color(1, 1, 1, player.hasWeapons[0] ? 1 : 0); // 해머
         weapon2Img.color = new Color(1, 1, 1, player.hasWeapons[1] ? 1 : 0); // 핸드건
@@ -254,6 +334,14 @@ public class GameManager : MonoBehaviour
         else // 보스가 없을 때
         {
             bossHealthGroup.anchoredPosition = Vector3.up * 200; // 보스 체력 UI 안보이게 함
+        }
+
+        // 경험치 UI
+        if (player.curExp <= 0)
+            ExpGaugeBar.localScale = new Vector3(0, 1, 1);
+        else
+        {
+            ExpGaugeBar.localScale = new Vector3((float)player.curExp / player.maxExp, 1, 1);
         }
     }
 }

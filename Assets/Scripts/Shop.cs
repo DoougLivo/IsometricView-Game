@@ -17,6 +17,7 @@ public class Shop : MonoBehaviour
 
     // 오디오 소스
     public AudioSource buySound; // 구매 소리
+    public AudioSource deniedSound; // 구매 실패 소리
 
     public void Enter(Player player) // 상점 존에 들어갔을 때
     {
@@ -35,6 +36,7 @@ public class Shop : MonoBehaviour
         int price = itemPrice[index]; // 아이템 가격
         if (price > enterPlayer.coin) // 플레이어가 돈이 부족할 때
         {
+            deniedSound.Play(); // 돈 부족 사운드
             StopCoroutine(Talk()); // 꾹 누르면 계속 실행되기 때문에 실행중인 코루틴을 꺼놓아야 함
             StartCoroutine(Talk()); // 다시 재시작되게 함
             return;
