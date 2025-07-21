@@ -194,7 +194,7 @@ public class GameManager : MonoBehaviour
                 enemy.manager = this; // GameManager를 Enemy 스크립트에 넣음
 
                 // 적 체력 바
-                enemyHPBar.transform.position = 
+                //enemyHPBar.transform.position = 
 
                 // 적 생성 후, 사용된 첫번째 데이터(인덱스 0)는 RemoveAt() 함수로 삭제함
                 enemyList.RemoveAt(0);
